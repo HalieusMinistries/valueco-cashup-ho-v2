@@ -1,52 +1,34 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, varianceLabel, matchSpeedPoints } from '../utils/calc'
+import { R, varianceLabel } from '../utils/calc'
+import { useMonthReconciliation } from '../hooks/useMonthReconciliation'
 
 interface Props { setTab: (t: any) => void }
 
 export default function OversPage({ setTab }: Props) {
+  
   const app = useApp()
+  const monthRecon = useMonthReconciliation()
 
-  const daysInMonth = new Date(app.year, app.month, 0).getDate()
-  const days: number[] = []
-  for (let d = 1; d <= daysInMonth; d++) {
-    if (app.kdRows.some(r => r.store === app.code && r.date === dateStr(app.year, app.month, d))) days.push(d)
-  }
+  const activeDays = monthRecon.days.filter(d => d.kdCash > 0 || d.kdCard > 0 || d.kdEFT > 0)
 
-  if (!days.length) return (
+  if (!activeDays.length) return (
     <div style={{color:'var(--txt2)',fontFamily:'var(--mono)',fontSize:11}}>Load data first</div>
   )
 
-  // Build KD cards by date for SP matching
-  const kdCardsByDate: Record<string, number> = {}
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ds = dateStr(app.year, app.month, d)
-    const kdRows = app.kdRows.filter(r => r.store === app.code && r.date === ds)
-    kdCardsByDate[ds] = kdRows.reduce((a, r) => a + r.card, 0)
-  }
-  const storeBankRows = app.bankRows.filter(r => r.account === app.bank)
-  const spMatches = matchSpeedPoints(storeBankRows, app.sp, kdCardsByDate, app.year, app.month)
-
   let runBal = 0
 
-  const rows = days.map(day => {
-    const ds = dateStr(app.year, app.month, day)
-    const kdRows = app.kdRows.filter(r => r.store === app.code && r.date === ds)
-    const cashiers = kdRows.filter(r => r.cashier.toUpperCase() !== 'STORE SUBTOTAL')
-    const inp = app.getDayInput(day)
-    const kdD = kdRows.reduce((a, r) => a + r.card, 0)
-    const kdE = kdRows.reduce((a, r) => a + r.eft, 0)
-    const tE = cashiers.reduce((a, r) => a + r.eft, 0)
-    const spT = spMatches.filter(m => m.coveredKDDay === ds).reduce((a, m) => a + m.bankAmount, 0)
+  const rows = activeDays.map(d => {
+    const inp = app.getDayInput(d.day)
     const dayTotal = inp.fnb + inp.floats + inp.change
     runBal += dayTotal - inp.surrender - inp.petty
 
-    const cardDiff = varianceLabel(spT, kdD)
-    const eftDiff = varianceLabel(tE, kdE)
+    const cardDiff = varianceLabel(d.spTotal, d.kdCard)
+    const eftDiff = varianceLabel(d.kdEFT, d.kdEFT)
     const runBalOk = Math.abs(runBal) < 0.01
 
     return (
-      <tr key={day} className="clickable" onClick={() => { app.setCurrentDay(day); setTab('cashup') }}>
-        <td style={{color:'var(--acc)',fontWeight:600}}>{day}</td>
+      <tr key={d.day} className="clickable" onClick={() => { app.setCurrentDay(d.day); setTab('cashup') }}>
+        <td style={{color:'var(--acc)',fontWeight:600}}>{d.day}</td>
         <td className="r">{R(inp.fnb)}</td>
         <td className="r">{R(inp.surrender)}</td>
         <td className="r">{R(inp.petty)}</td>
@@ -54,11 +36,11 @@ export default function OversPage({ setTab }: Props) {
         <td className="r">{R(inp.floats)}</td>
         <td className="r">{R(dayTotal)}</td>
         <td className="r" style={{color: runBalOk ? 'var(--txt)' : 'var(--red)'}}>{R(runBal)}</td>
-        <td className="r" style={{color:'var(--acc)'}}>{R(kdD)}</td>
-        <td className="r" style={{color:'var(--acc2)'}}>{R(spT)}</td>
+        <td className="r" style={{color:'var(--acc)'}}>{R(d.kdCard)}</td>
+        <td className="r" style={{color:'var(--acc2)'}}>{R(d.spTotal)}</td>
         <td className="r" style={{color: cardDiff.ok ? 'var(--grn)' : 'var(--red)'}}>{cardDiff.text}</td>
-        <td className="r" style={{color:'var(--acc)'}}>{R(kdE)}</td>
-        <td className="r" style={{color:'var(--acc2)'}}>{R(tE)}</td>
+        <td className="r" style={{color:'var(--acc)'}}>{R(d.kdEFT)}</td>
+        <td className="r" style={{color:'var(--acc2)'}}>{R(d.kdEFT)}</td>
         <td className="r" style={{color: eftDiff.ok ? 'var(--grn)' : 'var(--red)'}}>{eftDiff.text}</td>
       </tr>
     )
