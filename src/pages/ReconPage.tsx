@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, diffLabel, matchSpeedPoints } from '../utils/calc'
+import { dateStr, R, varianceLabel, matchSpeedPoints } from '../utils/calc'
 
 interface Props { setTab: (t: any) => void }
 
@@ -43,9 +43,9 @@ export default function ReconPage({ setTab }: Props) {
     gKDC += kdC; gKDD += kdD; gKDE += kdE; gKDV += kdV; gKDL += kdL
     gSP += spT; gRep += repC; gPetty += inp.petty
 
-    const cashDiff = diffLabel(kdC, repC)
-    const cardDiff = diffLabel(kdD, spT)
-
+    const cashDiff = varianceLabel(repC, kdC)
+    const cardDiff = varianceLabel(spT, kdD) 
+    
     return (
       <tr key={day} className="clickable" onClick={() => { app.setCurrentDay(day); setTab('cashup') }}>
         <td style={{color:'var(--acc)',fontWeight:600}}>{String(day).padStart(2,'0')}</td>
@@ -63,8 +63,8 @@ export default function ReconPage({ setTab }: Props) {
     )
   })
 
-  const totCashDiff = diffLabel(gKDC, gRep)
-  const totCardDiff = diffLabel(gKDD, gSP)
+  const totCashDiff = varianceLabel(gRep, gKDC)
+  const totCardDiff = varianceLabel(gSP, gKDD)
 
   return (
     <div>
@@ -138,7 +138,7 @@ export default function ReconPage({ setTab }: Props) {
               </thead>
               <tbody>
                 {spMatches.map((m, i) => {
-                  const diff = diffLabel(m.bankAmount, m.kdTotal)
+                  const diff = varianceLabel(m.bankAmount, m.kdTotal)
                   return (
                     <tr key={`${m.bankDate}-${i}`}>
                       <td style={{color:'var(--acc)'}}>{m.bankDate}</td>
