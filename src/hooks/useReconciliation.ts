@@ -141,8 +141,10 @@ export function useReconciliation(day: number): ReconciliationResult {
   const cashVariance = varianceLabel(repCash, kdCash)
   const cardVariance = varianceLabel(spTotal, kdCard)
   const eftVariance = varianceLabel(kdEFT, kdEFT) // EFT is KD only, always zero
-  const voucherVariance = varianceLabel(0, kdVoucher)
-  const loyaltyVariance = varianceLabel(0, kdLoyalty)
+  const storeVoucher = storeCashiers.reduce((a, r) => a + r.coupon, 0)
+  const storeEFT = storeCashiers.reduce((a, r) => a + r.eft, 0)
+  const voucherVariance = varianceLabel(storeVoucher, kdVoucher)
+  const loyaltyVariance = varianceLabel(kdLoyalty, kdLoyalty)
   const grandVariance = varianceLabel(grandTotal, kdStoreTotal)
   const physVariance = varianceLabel(repCash + inp.surrender, cashierTotal)
 

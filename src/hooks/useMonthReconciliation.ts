@@ -18,6 +18,8 @@ export interface DayRecon {
   // Cash deposits (CSV + manual)
   cashDeposits: { statDate: string; effDate: string; desc: string; amount: number; account: string }[]
   bankCashTotal: number
+  // EFT from bank
+  storeEFT: number
   // Day inputs
   fnb: number
   surrender: number
@@ -45,6 +47,7 @@ export interface MonthRecon {
   totalSP: number
   totalRepCash: number
   totalPetty: number
+  totalStoreEFT: number
   // SP matches for display
   spMatches: ReturnType<typeof matchSpeedPoints>
 }
@@ -67,7 +70,7 @@ export function useMonthReconciliation(): MonthRecon {
 
   let totalKDCash = 0, totalKDCard = 0, totalKDEFT = 0
   let totalKDVoucher = 0, totalKDLoyalty = 0
-  let totalSP = 0, totalRepCash = 0, totalPetty = 0
+  let totalSP = 0, totalRepCash = 0, totalPetty = 0, totalStoreEFT = 0
 
   const days: DayRecon[] = []
 
@@ -108,6 +111,12 @@ export function useMonthReconciliation(): MonthRecon {
     const cashDeposits = [...csvDeposits, ...manualDeposits]
     const bankCashTotal = cashDeposits.reduce((a, r) => a + r.amount, 0)
 
+    const eftDeposits = storeBankRows.filter(r =>
+      String(r.statDate) === dn && r.amount > 0 &&
+      (r.desc.includes('EFT') || r.desc.includes('INTERNET TRF'))
+    )
+    const storeEFT = eftDeposits.reduce((a, r) => a + r.amount, 0)
+
     // Cash Recon system total
     const fnbValue = inp.fnb !== 0 ? inp.fnb : contribCash
     const systemTotal = fnbValue + inp.surrender
@@ -125,12 +134,14 @@ export function useMonthReconciliation(): MonthRecon {
     totalSP += spTotal
     totalRepCash += fnbValue
     totalPetty += inp.petty
+    totalStoreEFT += storeEFT
 
     days.push({
       day: d, ds,
       kdCash, kdCard, kdEFT, kdVoucher, kdLoyalty, kdStoreTotal,
       contribCash, spTotal,
       cashDeposits, bankCashTotal,
+      storeEFT,
       fnb: inp.fnb, surrender: inp.surrender, petty: inp.petty,
       floats: inp.floats, change: inp.change,
       cashReconNr: inp.cashReconNr || '',
@@ -145,6 +156,6 @@ export function useMonthReconciliation(): MonthRecon {
     days, spMatches,
     totalKDCash, totalKDCard, totalKDEFT,
     totalKDVoucher, totalKDLoyalty,
-    totalSP, totalRepCash, totalPetty
+    totalSP, totalRepCash, totalPetty, totalStoreEFT
   }
 }
