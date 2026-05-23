@@ -21,14 +21,6 @@ export function Rsigned(n: number): string {
   return 'R0,00'
 }
 
-export function diffLabel(a: number, b: number): { text: string; ok: boolean; over: boolean } {
-  const d = N(a) - N(b)
-  if (Math.abs(d) < 0.01) return { text: '✓ R0,00', ok: true, over: false }
-  const abs = fmt(Math.abs(d))
-  if (d > 0) return { text: `▲ OVER R${abs}`, ok: false, over: true }
-  return { text: `▼ SHORT R${abs}`, ok: false, over: false }
-}
-
 // varianceLabel — use this everywhere a business difference is displayed.
 // Convention: reported = what the store/bank actually has
 //             expected = what KingDee says it should be
