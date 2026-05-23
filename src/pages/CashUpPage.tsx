@@ -1,5 +1,6 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, diffLabel, matchSpeedPoints } from '../utils/calc'
+import { R, dateStr, varianceLabel } from '../utils/calc'
+import { useReconciliation } from '../hooks/useReconciliation'
 import { MONTHS_S } from '../utils/stores'
 import NumericInput from '../components/NumericInput'
 
@@ -56,80 +57,46 @@ function DaySheet({ day }: { day: number }) {
   const ds = dateStr(app.year, app.month, day)
   const dn = `${app.year}${String(app.month).padStart(2,'0')}${String(day).padStart(2,'0')}`
 
-  const kdRows = app.kdRows.filter(r => r.store === app.code && r.date === ds)
-  const cashiers = kdRows.filter(r => r.cashier.toUpperCase() !== 'STORE SUBTOTAL')
-  const storeCashiers = app.storeRows.filter(r => r.date === ds)
-  const storeBankRows = app.bankRows.filter(r => r.account === app.bank)
-
-  const kdCardsByDate: Record<string, number> = {}
-  app.kdRows.filter(r => r.store === app.code && r.cashier.toUpperCase() !== 'STORE SUBTOTAL')
-    .forEach(r => { kdCardsByDate[r.date] = (kdCardsByDate[r.date] || 0) + r.card })
-
-  const spMatches = matchSpeedPoints(storeBankRows, app.sp, kdCardsByDate, app.year, app.month)
-  const sp = spMatches
-    .filter(m => m.coveredKDDay === ds)
-    .map(m => ({ statDate: dn, effDate: dn, desc: 'SPEEDPOINT', amount: m.bankAmount, account: app.bank }))
-  const bcBank = storeBankRows.filter(r => String(r.statDate) === dn && r.amount > 0 && (r.desc.includes('DEP') || r.desc.includes('CASH') || r.desc.startsWith('FNB ') || r.desc.includes('OB TRF') || r.desc.includes('BULK')))
+  const recon = useReconciliation(day)
   const inp = app.getDayInput(day)
-  const bcManual = (inp.manualDeposits || []).map(m => ({ statDate: dn, effDate: dn, desc: m.desc, amount: m.amount, account: app.bank }))
-  const bc = [...bcBank, ...bcManual]
-  const contribs = (() => {
-    const rows = app.contributionRows.filter(r => r.date === ds && r.store === app.code)
-    const map: Record<string, any> = {}
-    rows.forEach(r => {
-      if (!map[r.cashier]) map[r.cashier] = { name: r.cashier, cash: 0, card: 0, erase: 0, petty: r.petty, diff: 0 }
-      if (r.mode === 'cash') map[r.cashier].cash = r.contribution
-      else if (r.mode === 'bank card') map[r.cashier].card = r.contribution
-      else if (r.mode === 'erase') map[r.cashier].erase = r.contribution
-      map[r.cashier].diff += r.diff
-    })
-    return Object.values(map)
-  })()
-
-  const storeConfig = app.stores.find(s => s.code === app.code)
-  const defaultFloats = storeConfig?.floats ?? 0
-  const defaultChange = storeConfig?.change ?? 0
-
-  const contribCash = contribs.reduce((a: number, r: any) => a + r.cash, 0)
-  const tC = cashiers.reduce((a, r) => a + r.cash, 0)
-  const tD = cashiers.reduce((a, r) => a + r.card, 0)
-  const tE = cashiers.reduce((a, r) => a + r.eft, 0)
-  const tRn = cashiers.reduce((a, r) => a + r.rounding, 0)
-  const tG = cashiers.reduce((a, r) => a + r.gross, 0)
-  const tRt = cashiers.reduce((a, r) => a + r.returns, 0)
-  const tV = cashiers.reduce((a, r) => a + r.voucher, 0)
-  const tL = cashiers.reduce((a, r) => a + r.loyalty, 0)
-
+  const {
+    kdCash, kdCard, kdEFT, kdVoucher, kdLoyalty, kdStoreTotal,
+    repCash, spTotal, cashDepTotal,
+    contribCash, contribs,
+    effFloats, effChange,
+    physicalCashTotal, cashierTotal,
+    grandTotal,
+    cashVariance, cardVariance, eftVariance, voucherVariance, loyaltyVariance, grandVariance, physVariance,
+    spEntries, cashDepEntries,
+    hasKD, hasSP, hasCashDep, hasContribs, hasStoreData
+  } = recon
+  const storeTotal = kdStoreTotal
+  const cashDiff = cashVariance
+  const cardDiff = cardVariance
+  const eftDiff = eftVariance
+  const grandDiff = grandVariance
+  const physDiff = physVariance
+  const tC = recon.kdCash
+  const tD = recon.kdCard
+  const tE = recon.kdEFT
+  const sp = recon.spEntries
+  const bc = recon.cashDepEntries
+  const cashiers = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL')
+  const storeCashiers = app.storeRows.filter(r => r.date === ds)
   const stC = storeCashiers.reduce((a, r) => a + r.cash, 0)
   const stD = storeCashiers.reduce((a, r) => a + r.card, 0)
   const stE = storeCashiers.reduce((a, r) => a + r.eft, 0)
   const stRt = storeCashiers.reduce((a, r) => a + r.returns, 0)
   const stGift = storeCashiers.reduce((a, r) => a + r.gift, 0)
-  const stCoupon = storeCashiers.reduce((a, r) => a + r.coupon, 0)
   const stL = storeCashiers.reduce((a, r) => a + r.loyalty, 0)
 
-  const kdCash = cashiers.reduce((a, r) => a + r.cash, 0)
-  const kdCard = cashiers.reduce((a, r) => a + r.card, 0)
-  const kdEFT = cashiers.reduce((a, r) => a + r.eft, 0)
-  const kdVoucher = cashiers.reduce((a, r) => a + r.voucher, 0)
-  const kdLoyalty = cashiers.reduce((a, r) => a + r.loyalty, 0)
+  const tRn = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL').reduce((a, r) => a + r.rounding, 0)
+  const tG = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL').reduce((a, r) => a + r.gross, 0)
+  const tRt = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL').reduce((a, r) => a + r.returns, 0)
+  const tV = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL').reduce((a, r) => a + r.voucher, 0)
+  const tL = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL').reduce((a, r) => a + r.loyalty, 0)
 
-  const spTotal = sp.reduce((a, r) => a + r.amount, 0)
-  const cashDepTotal = bc.reduce((a, r) => a + r.amount, 0)
-  const storeTotal = kdCash + kdCard + kdEFT + kdVoucher + kdLoyalty
-  const repCash = inp.fnb
-  const grandTotal = repCash + spTotal + tE + inp.petty
-  const hasStoreData = storeCashiers.length > 0
-  const hasContribs = contribs.length > 0
-
-  const cashDiff = diffLabel(kdCash, repCash)
-  const cardDiff = diffLabel(kdCard, spTotal)
-  const eftDiff = diffLabel(kdEFT, tE)
-  const grandDiff = diffLabel(grandTotal, storeTotal)
-  const physDiff = diffLabel(inp.fnb + inp.surrender, hasStoreData ? stC : tC)
-
-  const effFloats = inp.floats || defaultFloats
-  const effChange = inp.change || defaultChange
+  const stCoupon = app.storeRows.filter(r => r.date === ds).reduce((a, r) => a + r.coupon, 0)
 
   function upd(field: string, val: string) {
     const parsed = parseFloat(val) || 0
@@ -266,7 +233,7 @@ function DaySheet({ day }: { day: number }) {
                 <td className="r">{R(r.cash)}</td><td className="r">{R(r.card)}</td>
                 <td className="r">{R(r.erase)}</td>
                 <td className="r" style={{color: Math.abs(r.diff) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>
-                  {Math.abs(r.diff) < 0.01 ? '✓ R0,00' : r.diff > 0 ? `▼ SHORT ${R(Math.abs(r.diff))}` : `▲ OVER ${R(Math.abs(r.diff))}`}
+                  {varianceLabel(-r.diff, 0).ok ? '✓ R0,00' : varianceLabel(-r.diff, 0).text}
                 </td>
               </tr>
             )) : (
@@ -416,13 +383,13 @@ function DaySheet({ day }: { day: number }) {
               <td>Vouchers</td>
               <td className="r" style={{color:'var(--acc)'}}>{R(kdVoucher)}</td>
               <td className="r" style={{color:'var(--acc2)'}}>{R(stCoupon)}</td>
-              <td className="r" style={{color: diffLabel(kdVoucher,stCoupon).ok ? 'var(--grn)' : 'var(--red)'}}>{diffLabel(kdVoucher,stCoupon).text}</td>
+              <td className="r" style={{color: varianceLabel(stCoupon,kdVoucher).ok ? 'var(--grn)' : 'var(--red)'}}>{varianceLabel(stCoupon,kdVoucher).text}</td>
             </tr>
             <tr>
               <td>Loyalty</td>
               <td className="r" style={{color:'var(--acc)'}}>{R(kdLoyalty)}</td>
               <td className="r" style={{color:'var(--acc2)'}}>{R(tL)}</td>
-              <td className="r" style={{color: diffLabel(kdLoyalty,tL).ok ? 'var(--grn)' : 'var(--red)'}}>{diffLabel(kdLoyalty,tL).text}</td>
+              <td className="r" style={{color: varianceLabel(tL,kdLoyalty).ok ? 'var(--grn)' : 'var(--red)'}}>{varianceLabel(tL,kdLoyalty).text}</td>
             </tr>
             <tr>
               <td>Petty Cash</td>

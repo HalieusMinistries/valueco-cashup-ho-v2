@@ -29,6 +29,19 @@ export function diffLabel(a: number, b: number): { text: string; ok: boolean; ov
   return { text: `▼ SHORT R${abs}`, ok: false, over: false }
 }
 
+// varianceLabel — use this everywhere a business difference is displayed.
+// Convention: reported = what the store/bank actually has
+//             expected = what KingDee says it should be
+// reported > expected = OVER (store has more than expected)
+// reported < expected = SHORT (store has less than expected)
+export function varianceLabel(reported: number, expected: number): { text: string; ok: boolean; over: boolean } {
+  const d = N(reported) - N(expected)
+  if (Math.abs(d) < 0.01) return { text: '✓ R0,00', ok: true, over: false }
+  const abs = fmt(Math.abs(d))
+  if (d > 0) return { text: `▲ OVER R${abs}`, ok: false, over: true }
+  return { text: `▼ SHORT R${abs}`, ok: false, over: false }
+}
+
 export function daysInMonth(year: number, month: number): number {
   return new Date(year, month, 0).getDate()
 }
