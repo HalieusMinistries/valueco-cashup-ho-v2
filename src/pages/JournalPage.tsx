@@ -1,10 +1,12 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, varianceLabel } from '../utils/calc'
+import { R, varianceLabel } from '../utils/calc'
+import { useMonthReconciliation } from '../hooks/useMonthReconciliation'
 
 interface Props { setTab: (t: any) => void }
 
 export default function JournalPage({ setTab }: Props) {
   const app = useApp()
+  const monthRecon = useMonthReconciliation()
 
   const storeRows = app.journalRows.filter(r => r.account === app.code)
   const journalData = storeRows.length > 0 ? storeRows : app.journalRows
@@ -16,10 +18,9 @@ export default function JournalPage({ setTab }: Props) {
 
   const rows = app.journalRows.filter(r => r.account === app.code).map(r => {
     const day = parseInt(r.date.split('-')[2])
-    const ds = dateStr(app.year, app.month, day)
-    const kdRows = app.kdRows.filter(row => row.store === app.code && row.date === ds)
     const inp = app.getDayInput(day)
-    const kdCash = kdRows.reduce((a, r) => a + r.cash, 0)
+    const dayRecon = monthRecon.days.find(d => d.day === day)
+    const kdCash = dayRecon?.kdCash ?? 0
     const revDiff = varianceLabel(r.revenueToday, kdCash)
     const expDiff = r.expenseToday > 0 ? varianceLabel(r.expenseToday, inp.surrender) : null
     runningBal += r.revenueToday - r.expenseToday
