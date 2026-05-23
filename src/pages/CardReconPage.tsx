@@ -1,27 +1,18 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, matchSpeedPoints, varianceLabel } from '../utils/calc'
+import { R, varianceLabel } from '../utils/calc'
 import { MONTHS_S } from '../utils/stores'
+import { useMonthReconciliation } from '../hooks/useMonthReconciliation'
 
 export default function CardReconPage() {
   const app = useApp()
-  const daysInMonth = new Date(app.year, app.month, 0).getDate()
+  const monthRecon = useMonthReconciliation()
 
-  const storeBankRows = app.bankRows.filter(r => r.account === app.bank)
-
-  const kdCardsByDate: Record<string, number> = {}
-  app.contributionRows
-    .filter(r => r.store === app.code && r.mode === 'bank card')
-    .forEach(r => { kdCardsByDate[r.date] = (kdCardsByDate[r.date] || 0) + r.contribution })
-
-  const spMatches = matchSpeedPoints(storeBankRows, app.sp, kdCardsByDate, app.year, app.month)
-
-  const rows = Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-    const ds = dateStr(app.year, app.month, day)
-    const kdTotal = kdCardsByDate[ds] || 0
-    const matched = spMatches.filter(m => m.coveredKDDay === ds)
-    const bankTotal = matched.reduce((a, m) => a + m.bankAmount, 0)
+  const rows = monthRecon.days.map(d => {
+    const matched = monthRecon.spMatches.filter(m => m.coveredKDDay === d.ds)
+    const kdTotal = d.kdCard
+    const bankTotal = d.spTotal
     const diff = bankTotal - kdTotal
-    return { day, ds, kdTotal, matched, bankTotal, diff }
+    return { day: d.day, kdTotal, matched, bankTotal, diff }
   })
 
   const thStyle = {
