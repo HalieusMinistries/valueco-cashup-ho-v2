@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, N } from '../utils/calc'
+import { dateStr, R, N, varianceLabel } from '../utils/calc'
 import { MONTHS_S } from '../utils/stores'
 import NumericInput from '../components/NumericInput'
 
@@ -141,7 +141,7 @@ export default function CashReconPage() {
                   />
                 </td>
                 <td className="r" style={{ color: Math.abs(diff) < 0.01 ? 'var(--grn)' : 'var(--red)' }}>
-                  {Math.abs(diff) < 0.01 ? '✓ R0,00' : diff > 0 ? `▲ OVER ${R(Math.abs(diff))}` : `▼ SHORT ${R(Math.abs(diff))}`}
+                  {varianceLabel(systemTotal, bankTotal).ok ? '✓ R0,00' : varianceLabel(systemTotal, bankTotal).text}
                 </td>
                 <td style={{ fontSize: 9, color: 'var(--txt2)', whiteSpace: 'nowrap' }}>
                   {deposits.map((d, i) => {
@@ -202,7 +202,7 @@ export default function CashReconPage() {
                       <td className="r">{R(systemTotal)}</td>
                       <td className="r">{R(bankTotal)}</td>
                       <td className="r" style={{ color: Math.abs(diff) < 0.01 ? 'var(--grn)' : 'var(--red)' }}>
-                        {Math.abs(diff) < 0.01 ? '✓ R0,00' : diff > 0 ? `▲ OVER ${R(Math.abs(diff))}` : `▼ SHORT ${R(Math.abs(diff))}`}
+                        {varianceLabel(bankTotal, systemTotal).ok ? '✓ R0,00' : varianceLabel(bankTotal, systemTotal).text}
                       </td>
                     </tr>
                   )
