@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, matchSpeedPoints } from '../utils/calc'
+import { dateStr, R, matchSpeedPoints, varianceLabel } from '../utils/calc'
 import { MONTHS_S } from '../utils/stores'
 
 export default function CardReconPage() {
@@ -58,7 +58,7 @@ export default function CardReconPage() {
                 <td className="r" style={{ color: 'var(--acc)' }}>{R(kdTotal)}</td>
                 <td className="r" style={{ color: 'var(--acc2)' }}>{R(bankTotal)}</td>
                 <td className="r" style={{ color: Math.abs(diff) < 0.01 ? 'var(--grn)' : 'var(--red)' }}>
-                  {kdTotal === 0 && matched.length === 0 ? '—' : Math.abs(diff) < 0.01 ? '✓ R0,00' : diff > 0 ? `▲ OVER ${R(Math.abs(diff))}` : `▼ SHORT ${R(Math.abs(diff))}`}
+                  {kdTotal === 0 && matched.length === 0 ? '—' : varianceLabel(bankTotal, kdTotal).ok ? '✓ R0,00' : varianceLabel(bankTotal, kdTotal).text}
                 </td>
                 <td style={{ fontSize: 9, color: 'var(--txt2)', whiteSpace: 'nowrap' }}>
                   {matched.map((m, i) => (
