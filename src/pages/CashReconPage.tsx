@@ -1,47 +1,34 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, N, varianceLabel } from '../utils/calc'
+import { R, varianceLabel } from '../utils/calc'
 import { MONTHS_S } from '../utils/stores'
 import NumericInput from '../components/NumericInput'
+import { useMonthReconciliation } from '../hooks/useMonthReconciliation'
 
 export default function CashReconPage() {
   const app = useApp()
-  const daysInMonth = new Date(app.year, app.month, 0).getDate()
+
+  const monthRecon = useMonthReconciliation()
 
   const bankEntryKey = (r: { statDate: string; amount: number; desc: string }) =>
     `${r.statDate}|${r.amount}|${r.desc.substring(0, 20)}`
-
-  let runningBalance = 0
-
-  function getDayCashDeposits(day: number) {
-    const dn = `${app.year}${String(app.month).padStart(2,'0')}${String(day).padStart(2,'0')}`
-    const bankDeposits = app.bankRows.filter(r =>
-      r.account === app.bank &&
-      String(r.statDate) === dn && r.amount > 0 &&
-      (r.desc.includes('ADT') || r.desc.includes('CASH DEPO') || r.desc.includes('CASH DEP') || r.desc.includes('BULK'))
-    )
-    const manualDeposits = (app.getDayInput(day).manualDeposits || []).map(m => ({
-      statDate: dn, effDate: dn, desc: m.desc, amount: m.amount, account: app.bank
-    }))
-    return [...bankDeposits, ...manualDeposits]
-  }
 
   function upd(day: number, field: string, val: number) {
     app.setDayInput(day, { [field]: val } as any)
   }
 
-  const rows = Array.from({ length: daysInMonth }, (_, i) => i + 1).map(day => {
-    const inp = app.getDayInput(day)
-    const ds = dateStr(app.year, app.month, day)
-    const deposits = getDayCashDeposits(day)
-    const bankTotal = deposits.reduce((a, r) => a + r.amount, 0)
-    const kdCash = app.contributionRows
-      .filter(r => r.store === app.code && r.date === ds && r.mode === 'cash')
-      .reduce((a, r) => a + r.contribution, 0)
-    const fnbValue = N(inp.fnb) !== 0 ? N(inp.fnb) : kdCash
-    const systemTotal = fnbValue + N(inp.surrender) // + N(inp.petty) — excluded per Elmarie 2026-05-18
-    runningBalance += systemTotal
-    const diff = systemTotal - bankTotal
-    return { day, inp, deposits, bankTotal, systemTotal, runningBalance, diff, kdCash }
+  let runningBalance = 0
+  const rows = monthRecon.days.map(d => {
+    const inp = app.getDayInput(d.day)
+    runningBalance += d.systemTotal
+    return {
+      day: d.day, inp,
+      deposits: d.cashDeposits,
+      bankTotal: d.bankCashTotal,
+      systemTotal: d.systemTotal,
+      runningBalance,
+      diff: d.systemTotal - d.bankCashTotal,
+      kdCash: d.contribCash
+    }
   })
 
   // Build recon nr summary — for each unique cashReconNr, sum system totals
