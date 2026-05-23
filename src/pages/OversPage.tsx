@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, diffLabel, matchSpeedPoints } from '../utils/calc'
+import { dateStr, R, varianceLabel, matchSpeedPoints } from '../utils/calc'
 
 interface Props { setTab: (t: any) => void }
 
@@ -40,8 +40,8 @@ export default function OversPage({ setTab }: Props) {
     const dayTotal = inp.fnb + inp.floats + inp.change
     runBal += dayTotal - inp.surrender - inp.petty
 
-    const cardDiff = diffLabel(spT, kdD)
-    const eftDiff = diffLabel(tE, kdE)
+    const cardDiff = varianceLabel(spT, kdD)
+    const eftDiff = varianceLabel(tE, kdE)
     const runBalOk = Math.abs(runBal) < 0.01
 
     return (
