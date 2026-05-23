@@ -1,63 +1,46 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, varianceLabel, matchSpeedPoints } from '../utils/calc'
+import { R, varianceLabel } from '../utils/calc'
+import { useMonthReconciliation } from '../hooks/useMonthReconciliation'
 
 interface Props { setTab: (t: any) => void }
 
 export default function ReconPage({ setTab }: Props) {
   const app = useApp()
+  const monthRecon = useMonthReconciliation()
 
-  const daysInMonth = new Date(app.year, app.month, 0).getDate()
-  const days: number[] = []
-  for (let d = 1; d <= daysInMonth; d++) {
-    if (app.kdRows.some(r => r.store === app.code && r.date === dateStr(app.year, app.month, d))) days.push(d)
-  }
+  const activeDays = monthRecon.days.filter(d => d.kdCash > 0 || d.kdCard > 0 || d.kdEFT > 0)
 
-  if (!days.length) return (
+  if (!activeDays.length) return (
     <div style={{color:'var(--txt2)',fontFamily:'var(--mono)',fontSize:11}}>Load KingDee CSV first</div>
   )
 
-  let gKDC = 0, gKDD = 0, gKDE = 0, gKDV = 0, gKDL = 0, gSP = 0, gRep = 0, gPetty = 0
+  const gKDC = monthRecon.totalKDCash
+  const gKDD = monthRecon.totalKDCard
+  const gKDE = monthRecon.totalKDEFT
+  const gKDV = monthRecon.totalKDVoucher
+  const gKDL = monthRecon.totalKDLoyalty
+  const gSP = monthRecon.totalSP
+  const gRep = monthRecon.totalRepCash
+  const gPetty = monthRecon.totalPetty
+  const spMatches = monthRecon.spMatches
 
-  // Build KD cards by date for SP matching
-  const kdCardsByDate: Record<string, number> = {}
-  for (let d = 1; d <= daysInMonth; d++) {
-    const ds = dateStr(app.year, app.month, d)
-    const kdRows = app.kdRows.filter(r => r.store === app.code && r.date === ds)
-    kdCardsByDate[ds] = kdRows.reduce((a, r) => a + r.card, 0)
-  }
+  const rows = activeDays.map(d => {
+    const inp = app.getDayInput(d.day)
+    const cashDiff = varianceLabel(d.fnb !== 0 ? d.fnb : d.contribCash, d.kdCash)
+    const cardDiff = varianceLabel(d.spTotal, d.kdCard)
 
-  const storeBankRows = app.bankRows.filter(r => r.account === app.bank)
-  const spMatches = matchSpeedPoints(storeBankRows, app.sp, kdCardsByDate, app.year, app.month)
-
-  const rows = days.map(day => {
-    const ds = dateStr(app.year, app.month, day)
-    const kdRows = app.kdRows.filter(r => r.store === app.code && r.date === ds)
-    const inp = app.getDayInput(day)
-    const kdC = kdRows.reduce((a, r) => a + r.cash, 0)
-    const kdD = kdRows.reduce((a, r) => a + r.card, 0)
-    const kdE = kdRows.reduce((a, r) => a + r.eft, 0)
-    const kdV = kdRows.reduce((a, r) => a + r.voucher, 0)
-    const kdL = kdRows.reduce((a, r) => a + r.loyalty, 0)
-    const spT = spMatches.filter(m => m.coveredKDDay === ds).reduce((a, m) => a + m.bankAmount, 0)
-    const repC = inp.fnb
-    gKDC += kdC; gKDD += kdD; gKDE += kdE; gKDV += kdV; gKDL += kdL
-    gSP += spT; gRep += repC; gPetty += inp.petty
-
-    const cashDiff = varianceLabel(repC, kdC)
-    const cardDiff = varianceLabel(spT, kdD) 
-    
     return (
-      <tr key={day} className="clickable" onClick={() => { app.setCurrentDay(day); setTab('cashup') }}>
-        <td style={{color:'var(--acc)',fontWeight:600}}>{String(day).padStart(2,'0')}</td>
-        <td className="r" style={{color:'var(--acc)'}}>{R(kdC)}</td>
-        <td className="r" style={{color:'var(--acc2)'}}>{R(repC)}</td>
+      <tr key={d.day} className="clickable" onClick={() => { app.setCurrentDay(d.day); setTab('cashup') }}>
+        <td style={{color:'var(--acc)',fontWeight:600}}>{String(d.day).padStart(2,'0')}</td>
+        <td className="r" style={{color:'var(--acc)'}}>{R(d.kdCash)}</td>
+        <td className="r" style={{color:'var(--acc2)'}}>{R(d.fnb !== 0 ? d.fnb : d.contribCash)}</td>
         <td className="r" style={{color: cashDiff.ok ? 'var(--grn)' : 'var(--red)'}}>{cashDiff.text}</td>
-        <td className="r" style={{color:'var(--acc)'}}>{R(kdD)}</td>
-        <td className="r" style={{color:'var(--acc2)'}}>{R(spT)}</td>
+        <td className="r" style={{color:'var(--acc)'}}>{R(d.kdCard)}</td>
+        <td className="r" style={{color:'var(--acc2)'}}>{R(d.spTotal)}</td>
         <td className="r" style={{color: cardDiff.ok ? 'var(--grn)' : 'var(--red)'}}>{cardDiff.text}</td>
-        <td className="r">{R(kdE)}</td>
-        <td className="r">{R(kdV)}</td>
-        <td className="r">{R(kdL)}</td>
+        <td className="r">{R(d.kdEFT)}</td>
+        <td className="r">{R(d.kdVoucher)}</td>
+        <td className="r">{R(d.kdLoyalty)}</td>
         <td className="r">{R(inp.petty)}</td>
       </tr>
     )
@@ -65,7 +48,7 @@ export default function ReconPage({ setTab }: Props) {
 
   const totCashDiff = varianceLabel(gRep, gKDC)
   const totCardDiff = varianceLabel(gSP, gKDD)
-
+        
   return (
     <div>
       <div className="stats">
