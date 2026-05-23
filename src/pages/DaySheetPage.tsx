@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { dateStr, R } from '../utils/calc'
+import { dateStr, R, varianceLabel } from '../utils/calc'
 import { MONTHS_S } from '../utils/stores'
 import NumericInput from '../components/NumericInput'
 
@@ -130,7 +130,7 @@ function DaySheet({ day }: { day: number }) {
                 <td className="r">{R(r.erase)}</td>
                 <td className="r">{R(r.petty)}</td>
                 <td className="r" style={{color: Math.abs(r.diff) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>
-                  {Math.abs(r.diff) < 0.01 ? '✓ R0,00' : r.diff > 0 ? `▲ OVER ${R(Math.abs(r.diff))}` : `▼ SHORT ${R(Math.abs(r.diff))}`}
+                  {varianceLabel(-r.diff, 0).ok ? '✓ R0,00' : varianceLabel(-r.diff, 0).text}
                 </td>
                 <td style={{fontSize:11,color:'var(--txt2)'}}>{r.remark || '—'}</td>
               </tr>
