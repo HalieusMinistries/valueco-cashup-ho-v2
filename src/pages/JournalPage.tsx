@@ -1,5 +1,5 @@
 import { useApp } from '../context/AppContext'
-import { dateStr, R, diffLabel } from '../utils/calc'
+import { dateStr, R, varianceLabel } from '../utils/calc'
 
 interface Props { setTab: (t: any) => void }
 
@@ -20,8 +20,8 @@ export default function JournalPage({ setTab }: Props) {
     const kdRows = app.kdRows.filter(row => row.store === app.code && row.date === ds)
     const inp = app.getDayInput(day)
     const kdCash = kdRows.reduce((a, r) => a + r.cash, 0)
-    const revDiff = diffLabel(r.revenueToday, kdCash)
-    const expDiff = r.expenseToday > 0 ? diffLabel(r.expenseToday, inp.surrender) : null
+    const revDiff = varianceLabel(r.revenueToday, kdCash)
+    const expDiff = r.expenseToday > 0 ? varianceLabel(r.expenseToday, inp.surrender) : null
     runningBal += r.revenueToday - r.expenseToday
     const balDiff = null
     totalRev += r.revenueToday
@@ -55,7 +55,7 @@ export default function JournalPage({ setTab }: Props) {
   const lastRow = storeJournalRows[storeJournalRows.length - 1]
   const closingBal = runningBal
 
-  const totRevDiff = diffLabel(totalRev, totalCashKD)
+  const totRevDiff = varianceLabel(totalRev, totalCashKD)
 
   if (!app.journalRows.length) return (
     <div style={{color:'var(--txt2)',fontFamily:'var(--mono)',fontSize:11}}>Load Cash Journal CSV first</div>
