@@ -62,7 +62,7 @@ function DaySheet({ day }: { day: number }) {
   const {
     kdCash, kdCard, kdEFT, kdVoucher, kdLoyalty, kdStoreTotal,
     repCash, spTotal, cashDepTotal,
-    contribCash, contribs,
+    contribCash, contribCard, contribEFT, contribs,
     effFloats, effChange,
     physicalCashTotal, cashierTotal,
     grandTotal,
@@ -78,7 +78,7 @@ function DaySheet({ day }: { day: number }) {
   const physDiff = physVariance
   const tC = recon.kdCash
   const tD = recon.kdCard
-  const tE = recon.kdEFT
+  const tE = contribEFT
   const sp = recon.spEntries
   const bc = recon.cashDepEntries
   const cashiers = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL')

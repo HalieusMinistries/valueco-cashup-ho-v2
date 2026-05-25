@@ -18,6 +18,7 @@ export interface ReconciliationResult {
   // Contribution totals
   contribCash: number
   contribCard: number
+  contribEFT: number
   contribs: {
     name: string
     cash: number
@@ -106,16 +107,18 @@ export function useReconciliation(day: number): ReconciliationResult {
   const contribMap: Record<string, any> = {}
   contribRows.forEach(r => {
     if (!contribMap[r.cashier]) contribMap[r.cashier] = {
-      name: r.cashier, cash: 0, card: 0, erase: 0, petty: r.petty, diff: 0, remark: r.remark || ''
+      name: r.cashier, cash: 0, card: 0, eft: 0, erase: 0, petty: r.petty, diff: 0, remark: r.remark || ''
     }
     if (r.mode === 'cash') contribMap[r.cashier].cash = r.contribution
     else if (r.mode === 'bank card') contribMap[r.cashier].card = r.contribution
     else if (r.mode === 'erase') contribMap[r.cashier].erase = r.contribution
+    else if (r.mode === 'eft') contribMap[r.cashier].eft = r.contribution
     contribMap[r.cashier].diff += r.diff
   })
   const contribs = Object.values(contribMap)
   const contribCash = contribs.reduce((a: number, r: any) => a + r.cash, 0)
   const contribCard = contribs.reduce((a: number, r: any) => a + r.card, 0)
+  const contribEFT = contribs.reduce((a: number, r: any) => a + (r.eft || 0), 0)
 
   // Store config
   const storeConfig = app.stores.find(s => s.code === app.code)
@@ -135,7 +138,7 @@ export function useReconciliation(day: number): ReconciliationResult {
   const physicalCashTotal = repCash + inp.surrender + (inp.cashOnHand || 0)
 
   // Grand total
-  const grandTotal = repCash + spTotal + kdEFT + inp.petty
+  const grandTotal = repCash + spTotal + contribEFT + inp.petty
 
   // Variance labels — always varianceLabel(reported, expected)
   const cashVariance = varianceLabel(repCash, kdCash)
@@ -151,7 +154,7 @@ export function useReconciliation(day: number): ReconciliationResult {
   return {
     kdCash, kdCard, kdEFT, kdVoucher, kdLoyalty, kdStoreTotal,
     repCash, spTotal, cashDepTotal,
-    contribCash, contribCard, contribs,
+    contribCash, contribCard, contribEFT, contribs,
     effFloats, effChange,
     physicalCashTotal, cashierTotal,
     grandTotal,
