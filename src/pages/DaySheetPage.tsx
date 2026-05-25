@@ -230,11 +230,13 @@ function DaySheet({ day }: { day: number }) {
                     }} />
                 </td>
                 <td>
-                  <input className="ti" value={e.amount || ''} placeholder="0.00"
-                    onChange={ev => {
+                  <NumericInput
+                    className="ti"
+                    value={e.amount || 0}
+                    onChange={v => {
                       const updated = [...(inp.eftDetails || [])]
-                      updated[i] = { ...updated[i], amount: parseFloat(ev.target.value) || 0 }
-                      app.addLog('FIELD_CHANGE', `DaySheet day ${String(day).padStart(2,'0')} — EFT row ${i+1} amount: ${ev.target.value}`)
+                      updated[i] = { ...updated[i], amount: v }
+                      app.addLog('FIELD_CHANGE', `DaySheet day ${String(day).padStart(2,'0')} — EFT row ${i+1} amount: ${v}`)
                       app.setDayInput(day, { ...inp, eftDetails: updated })
                     }} />
                 </td>
