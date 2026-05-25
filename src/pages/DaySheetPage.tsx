@@ -56,11 +56,12 @@ function DaySheet({ day }: { day: number }) {
     const map: Record<string, any> = {}
     rows.forEach(r => {
       if (!map[r.cashier]) map[r.cashier] = {
-        name: r.cashier, cash: 0, card: 0, erase: 0,
+        name: r.cashier, cash: 0, card: 0, eft: 0, erase: 0,
         petty: r.petty, diff: 0, remark: r.remark || ''
       }
       if (r.mode === 'cash') map[r.cashier].cash = r.contribution
       else if (r.mode === 'bank card') map[r.cashier].card = r.contribution
+      else if (r.mode === 'eft') map[r.cashier].eft = r.contribution
       else if (r.mode === 'erase') map[r.cashier].erase = r.contribution
       map[r.cashier].diff += r.diff
     })
@@ -115,6 +116,7 @@ function DaySheet({ day }: { day: number }) {
               <th>Cashier</th>
               <th className="r">Cash</th>
               <th className="r">Bank Card</th>
+              <th className="r">EFT</th>
               <th className="r">Erase</th>
               <th className="r">Petty Cash</th>
               <th className="r">vs KD System</th>
@@ -127,6 +129,7 @@ function DaySheet({ day }: { day: number }) {
                 <td>{r.name}</td>
                 <td className="r">{R(r.cash)}</td>
                 <td className="r">{R(r.card)}</td>
+                <td className="r">{R(r.eft || 0)}</td>
                 <td className="r">{R(r.erase)}</td>
                 <td className="r">{R(r.petty)}</td>
                 <td className="r" style={{color: Math.abs(r.diff) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>
@@ -135,13 +138,14 @@ function DaySheet({ day }: { day: number }) {
                 <td style={{fontSize:11,color:'var(--txt2)'}}>{r.remark || '—'}</td>
               </tr>
             )) : (
-              <tr><td colSpan={7} style={{color:'var(--txt2)',textAlign:'center',padding:10}}>No contributions loaded for this day</td></tr>
+              <tr><td colSpan={8} style={{color:'var(--txt2)',textAlign:'center',padding:10}}>No contributions loaded for this day</td></tr>
             )}
             {hasContribs && (
               <tr className="sub">
                 <td>TOTALS</td>
                 <td className="r">{R(tCash)}</td>
                 <td className="r">{R(tCard)}</td>
+                <td className="r">{R(contribs.reduce((a: number, r: any) => a + (r.eft || 0), 0))}</td>
                 <td className="r">{R(tErase)}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + r.petty, 0))}</td>
                 <td></td><td></td>
