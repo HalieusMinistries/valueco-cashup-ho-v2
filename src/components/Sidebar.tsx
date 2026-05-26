@@ -411,6 +411,7 @@ export default function Sidebar() {
       removedBankEntries: app.removedBankEntries,
       accuracyChecks,
       storeReports,
+      contributionRows: app.contributionRows,
       activityLog: app.getLog()
     }
 
