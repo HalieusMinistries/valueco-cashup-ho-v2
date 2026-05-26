@@ -492,16 +492,25 @@ export default function Sidebar() {
           loyalty: r.loyaltyPoints
         }))
 
-        contribs.forEach(r => allContribRows.push({
-          date: r.date,
-          store: r.storeCode,
-          cashier: r.cashier,
-          mode: r.settlementMode.toLowerCase(),
-          contribution: r.contributionAmount,
-          petty: r.pettyCash,
-          diff: r.difference,
-          remark: r.remark
-        }))
+        contribs.forEach(r => {
+          const rawMode = r.settlementMode.toLowerCase()
+          let mode = rawMode
+          if (rawMode === 'bank card') mode = 'bank card'
+          else if (rawMode === 'cash') mode = 'cash'
+          else if (rawMode === 'erase') mode = 'erase'
+          else if (rawMode === 'payment by points') mode = 'payment by points'
+          else if (rawMode !== 'bank card' && rawMode !== 'cash' && rawMode !== 'erase' && rawMode !== 'payment by points') mode = 'eft'
+          allContribRows.push({
+            date: r.date,
+            store: r.storeCode,
+            cashier: r.cashier,
+            mode,
+            contribution: r.contributionAmount,
+            petty: r.pettyCash,
+            diff: r.difference,
+            remark: r.remark
+          })
+        })
 
         // Aggregate journal entries by date — sum receipts and payments, keep last balance
         const journalByDate = new Map<string, { prevBal: number; revenueToday: number; expenseToday: number; balanceToday: number; name: string }>()
