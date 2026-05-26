@@ -79,6 +79,8 @@ function DaySheet({ day }: { day: number }) {
   const tC = recon.kdCash
   const tD = recon.kdCard
   const tE = contribEFT
+  const contribEFTByName: Record<string, number> = {}
+  contribs.forEach((r: any) => { contribEFTByName[r.name.trim()] = r.eft || 0 })
   const sp = recon.spEntries
   const bc = recon.cashDepEntries
   const cashiers = app.kdRows.filter(r => r.store === app.code && r.date === ds && r.cashier.toUpperCase() !== 'STORE SUBTOTAL')
@@ -152,7 +154,7 @@ function DaySheet({ day }: { day: number }) {
               <tr key={r.cashier}>
                 <td>{r.cashier}</td>
                 <td className="r">{R(r.cash)}</td><td className="r">{R(r.card)}</td>
-                <td className="r">{R(r.eft)}</td><td className="r">{R(r.rounding)}</td>
+                <td className="r">{R(contribEFTByName[r.cashier.trim()] || r.eft)}</td><td className="r">{R(r.rounding)}</td>
                 <td className="r">{R(r.gross)}</td><td className="r">{R(r.returns)}</td>
                 <td className="r">{R(r.voucher)}</td><td className="r">{R(r.loyalty)}</td>
               </tr>
