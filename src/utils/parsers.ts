@@ -111,7 +111,8 @@ export function parseContributions(buffer: ArrayBuffer | string, isXLSX: boolean
       f.forEach((c, idx) => {
         const s = String(c).replace(/^'+/, '').toLowerCase()
         if (s.includes('reconciliation date') || s === 'date') colDate = idx
-        if (s === 'org. code' || s === 'store code' || s === 'org code') colStore = idx
+        if (s === 'org. code' || s === 'org code') colStore = idx
+else if (s === 'store code' && colStore === 1) colStore = idx
         if (s === 'cashier') colCashier = idx
         if (s.includes('settlement')) colMode = idx
         if (s.includes('contribution amount (original')) colContrib = idx
