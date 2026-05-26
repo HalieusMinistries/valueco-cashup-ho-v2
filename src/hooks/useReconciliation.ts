@@ -23,6 +23,7 @@ export interface ReconciliationResult {
     name: string
     cash: number
     card: number
+    eft: number
     erase: number
     petty: number
     diff: number
