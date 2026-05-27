@@ -2,7 +2,9 @@ import { useApp } from '../context/AppContext'
 import { MONTHS_S } from '../utils/stores'
 
 export default function TopBar() {
-  const { name, code, month, year, kdRows, storeRows, bankRows, journalRows, contributionRows, serverOnline, lastSaved } = useApp()
+  const { name, code, month, year, kdRows, storeRows, bankRows, journalRows, contributionRows, serverOnline, lastSaved, currentStoreDiscrepancies } = useApp()
+  const errCount = currentStoreDiscrepancies.filter(d => d.severity === 'ERROR').length
+  const warnCount = currentStoreDiscrepancies.filter(d => d.severity === 'WARNING').length
 
   return (
     <div className="topbar">
@@ -21,6 +23,12 @@ export default function TopBar() {
           {serverOnline ? '● Online' : '● Offline'}
           {serverOnline && lastSaved && ` · Saved ${lastSaved}`}
         </span>
+        {(errCount > 0 || warnCount > 0) && (
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 9, display: 'flex', gap: 6 }}>
+            {errCount > 0 && <span style={{ color: 'var(--red)' }}>✖ {errCount} err</span>}
+            {warnCount > 0 && <span style={{ color: '#f5a623' }}>▲ {warnCount} warn</span>}
+          </span>
+        )}
       </div>
     </div>
   )

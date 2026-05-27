@@ -35,14 +35,14 @@ const TAB_LABELS: Record<Tab, string> = {
 }
 
 function Shell() {
-  const { authed, addLog } = useApp()
-  const [tab, setTab] = useState<Tab>('setup')
+  const { authed, addLog, currentTab, setCurrentTab } = useApp()
+  const tab = currentTab as Tab
 
   if (!authed) return <LoginGate />
 
   function handleTabChange(t: Tab) {
     addLog('TAB_SWITCH', `Navigated to ${TAB_LABELS[t]}`)
-    setTab(t)
+    setCurrentTab(t)
   }
 
   return (

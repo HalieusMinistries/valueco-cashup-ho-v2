@@ -26,6 +26,7 @@ export async function login(username: string, password: string): Promise<boolean
     'matthew': 'Revelation@717',
     'monique': 'cashup2026',
     'elmarie': 'cashup2026',
+    'lynne': 'cashup2026',
   }
   return users[username.toLowerCase()] === password
 }

@@ -379,7 +379,7 @@ function DaySheet({ day }: { day: number }) {
             </tr>
             <tr>
               <td>EFT</td>
-              <td className="r" style={{color:'var(--acc)'}}>{R(kdEFT)}</td>
+              <td className="r" style={{color:'var(--acc)'}}>{R(tE)}</td>
               <td className="r" style={{color:'var(--acc2)'}}>{R(tE)}</td>
               <td className="r" style={{color: eftDiff.ok ? 'var(--grn)' : 'var(--red)'}}>{eftDiff.text}</td>
             </tr>

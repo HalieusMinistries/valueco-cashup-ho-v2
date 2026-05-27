@@ -205,6 +205,39 @@ http.createServer(async (req, res) => {
     return
   }
 
+  //  API: Backup — full snapshot save and load 
+  const BACKUP_FILE = path.join(DATA_DIR, '_full_backup.json')
+
+  if (pathname === '/api/backup' && req.method === 'GET') {
+    if (!fs.existsSync(BACKUP_FILE)) {
+      sendJSON(res, 200, { exists: false, backup: null })
+      return
+    }
+    try {
+      const raw = fs.readFileSync(BACKUP_FILE, 'utf8')
+      const backup = JSON.parse(raw)
+      log('Full backup loaded')
+      sendJSON(res, 200, { exists: true, backup })
+    } catch (err) {
+      log(`Error reading backup: ${err.message}`)
+      sendJSON(res, 500, { error: 'Failed to read backup' })
+    }
+    return
+  }
+
+  if (pathname === '/api/backup' && req.method === 'POST') {
+    try {
+      const body = await readBody(req)
+      fs.writeFileSync(BACKUP_FILE, JSON.stringify(body, null, 2), 'utf8')
+      log('Full backup saved')
+      sendJSON(res, 200, { ok: true, savedAt: new Date().toISOString() })
+    } catch (err) {
+      log(`Error saving backup: ${err.message}`)
+      sendJSON(res, 500, { error: 'Failed to save backup' })
+    }
+    return
+  }
+  
   //  Static file serving 
   let filePath = path.join(DIST, pathname === '/' ? 'index.html' : pathname)
 

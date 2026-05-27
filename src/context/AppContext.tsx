@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, useRef, useEffect } from 'react'
+import { createContext, useContext, useState, useRef, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { VCL_STORES, type StoreConfig } from '../utils/stores'
 import { saveState, loadState, saveLog, loadLog, checkServerHealth, formatPeriod } from '../utils/persistence'
+import { runBookkeepingEngine } from '../utils/bookkeepingEngine'
+import type { Discrepancy } from '../utils/bookkeepingEngine'
 
 // ─── Data Interfaces ────────────────────────────────────────────────────────
 
@@ -39,6 +41,7 @@ export interface DayInput {
   cashReconNr?: string; bankReconNr?: string
   manualDeposits?: { day: number; desc: string; amount: number }[]
   eftDetails?: { date: string; soNr: string; amount: number }[]
+  refundOfPayment?: number
 }
 
 // ─── Audit Log ──────────────────────────────────────────────────────────────
@@ -67,6 +70,7 @@ interface AppState {
   journalRows: JournalRow[]
   dayInputs: Record<number, DayInput>
   currentDay: number | null
+  currentTab: string
   authed: boolean
   closingBalance: number
   removedBankEntries: string[]
@@ -82,6 +86,7 @@ interface AppContextType extends AppState {
   setJournalRows: (rows: JournalRow[]) => void
   setDayInput: (day: number, input: Partial<DayInput>) => void
   setCurrentDay: (day: number | null) => void
+  setCurrentTab: (tab: string) => void
   selectStore: (code: string) => void
   getDayInput: (day: number) => DayInput
   resetMonth: () => void
@@ -99,9 +104,11 @@ interface AppContextType extends AppState {
   setOpeningBalance: (val: number) => void
   addManualDeposit: (day: number, desc: string, amount: number) => void
   removeManualDeposit: (day: number, index: number) => void
+  allDiscrepancies: Discrepancy[]
+  currentStoreDiscrepancies: Discrepancy[]
 }
 
-// ─── Defaults ───────────────────────────────────────────────────────────────
+// ─── Defaults
 
 const defaultDayInput = (): DayInput => ({
   fnb: 0, surrender: 0, floats: 0, change: 0, petty: 0, reconNr: '',
@@ -118,6 +125,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     month: new Date().getMonth() + 1, year: new Date().getFullYear(),
     kdRows: [], bankRows: [], storeRows: [], contributionRows: [], journalRows: [],
     dayInputs: {}, currentDay: null,
+    currentTab: 'setup',
     authed: sessionStorage.getItem('vc_auth') === '1',
     closingBalance: 0,
     removedBankEntries: []
@@ -157,9 +165,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ─── Persistence: Health check on mount ──────────────────────────────────
 
   useEffect(() => {
-    checkServerHealth().then(online => {
+    checkServerHealth().then(async online => {
       setServerOnline(online)
       addLog('SERVER', online ? 'Server reachable on startup' : 'Server unreachable on startup')
+      if (!online) return
+      try {
+        const res = await fetch('/api/backup')
+        const data = await res.json()
+        if (data.exists && data.backup) {
+          const b = data.backup
+          if (!b.version || !b.store || !b.period) return
+          setState(s => ({
+            ...s,
+            name: b.store.name, code: b.store.code, bank: b.store.bank, sp: b.store.sp,
+            month: b.period.month, year: b.period.year,
+            dayInputs: b.dayInputs || {},
+            kdRows: b.kdRows || [],
+            bankRows: b.bankRows || [],
+            storeRows: b.storeRows || [],
+            journalRows: b.journalRows || [],
+            contributionRows: b.contributionRows || [],
+            removedBankEntries: b.removedBankEntries || []
+          }))
+          addLog('BACKUP_AUTO', `Full backup auto-restored from server — ${b.store.name} ${b.period.year}-${String(b.period.month).padStart(2,'0')}`)
+        }
+      } catch (err) {
+        addLog('BACKUP_ERROR', `Auto-restore failed: ${err}`)
+      }
     })
   }, [])
 
@@ -192,7 +224,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           sp: saved.sp || s.sp,
           dayInputs: saved.dayInputs || {},
           removedBankEntries: saved.removedBankEntries || [],
-          bankRows: s.bankRows,
+          bankRows: s.bankRows.length > 0 ? s.bankRows : (saved.bankRows || []),
           storeRows: saved.storeRows || [],
           closingBalance: saved.closingBalance || 0,
           // kdRows, contributionRows and journalRows are global — fetched for all stores at once
@@ -440,6 +472,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTimeout(doSave, 500)
   }
 
+  const setCurrentTab = (tab: string) => {
+    setState(s => ({ ...s, currentTab: tab }))
+  }
+
   const setCurrentDay = (day: number | null) => {
     setState(s => ({ ...s, currentDay: day }))
     if (day !== null) addLog('NAV', `Opened day ${String(day).padStart(2, '0')}`)
@@ -489,18 +525,38 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addLog('RESET', 'Month data reset')
   }
 
+  // ─── Bookkeeping Engine ───────────────────────────────────────────────────
+
+  const allDiscrepancies = useMemo(() => runBookkeepingEngine({
+    stores: VCL_STORES,
+    kdRows: state.kdRows,
+    bankRows: state.bankRows,
+    contributionRows: state.contributionRows,
+    journalRows: state.journalRows,
+    year: state.year,
+    month: state.month,
+    currentStoreCode: state.code,
+    dayInputs: state.dayInputs
+  }), [state.kdRows, state.bankRows, state.contributionRows, state.journalRows, state.year, state.month, state.code, state.dayInputs])
+
+  const currentStoreDiscrepancies = useMemo(() =>
+    allDiscrepancies.filter(d => d.storeCode === state.code),
+    [allDiscrepancies, state.code]
+  )
+
   // ─── Provider Value ───────────────────────────────────────────────────────
 
   return (
     <Ctx.Provider value={{
       ...state, stores: VCL_STORES,
       setAuthed, setConfig, setKDRows, setBankRows, setStoreRows,
-      setContribRows, setJournalRows, setDayInput, setCurrentDay,
+      setContribRows, setJournalRows, setDayInput, setCurrentDay, setCurrentTab,
       selectStore, getDayInput, resetMonth,
       addLog, getLog,
       serverOnline, lastSaved, triggerSave, saveWithJournal,
       removeBankEntry, restoreBankEntry, setOpeningBalance,
-      addManualDeposit, removeManualDeposit
+      addManualDeposit, removeManualDeposit,
+      allDiscrepancies, currentStoreDiscrepancies
     }}>
       {children}
     </Ctx.Provider>

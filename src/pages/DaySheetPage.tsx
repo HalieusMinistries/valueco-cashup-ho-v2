@@ -61,7 +61,7 @@ function DaySheet({ day }: { day: number }) {
       }
       if (r.mode === 'cash') map[r.cashier].cash = r.contribution
       else if (r.mode === 'bank card') map[r.cashier].card = r.contribution
-      else if (r.mode === 'eft') map[r.cashier].eft = r.contribution
+      else if (r.mode === 'eft') { map[r.cashier].eft = r.contribution; console.log('EFT hit:', r.cashier, r.contribution, r.store, r.date) }
       else if (r.mode === 'erase') map[r.cashier].erase = r.contribution
       map[r.cashier].diff += r.diff
     })

@@ -7,6 +7,21 @@ export default function CardReconPage() {
   const app = useApp()
   const monthRecon = useMonthReconciliation()
 
+  
+  function exportSpeedPoints() {
+    const lines = ['Date,Bank SpeedPoint']
+    monthRecon.days.forEach(d => {
+      const matched = monthRecon.spMatches.filter(m => m.coveredKDDay === d.ds)
+      const bankTotal = matched.reduce((a, m) => a + m.bankAmount, 0)
+      lines.push(`${String(d.day).padStart(2,'0')} ${MONTHS_S[app.month-1]} ${app.year},${bankTotal.toFixed(2)}`)
+    })
+    const total = monthRecon.spMatches.reduce((a, m) => a + m.bankAmount, 0)
+    lines.push(`TOTAL,${total.toFixed(2)}`)
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }))
+    a.download = `SpeedPoints_${app.code}_${app.year}${String(app.month).padStart(2,'0')}.csv`
+    a.click()
+  }
   const rows = monthRecon.days.map(d => {
     const matched = monthRecon.spMatches.filter(m => m.coveredKDDay === d.ds)
     const kdTotal = d.kdCard
@@ -27,6 +42,9 @@ export default function CardReconPage() {
     <div>
       <div style={{ fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 600, marginBottom: 14 }}>
         Card Recon — {MONTHS_S[app.month - 1]} {app.year} — {app.name}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <button className="btn" onClick={exportSpeedPoints}>⬇ Export SpeedPoints</button>
       </div>
       <div className="card" style={{ overflowX: 'auto', maxHeight: '70vh', overflowY: 'auto' }}>
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
@@ -68,6 +86,16 @@ export default function CardReconPage() {
                 </td>
               </tr>
             ))}
+          <tr style={{ borderTop: '2px solid var(--brd)', fontWeight: 700 }}>
+              <td style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--txt)' }}>TOTALS</td>
+              <td className="r" style={{ color: 'var(--acc)' }}>{R(rows.reduce((a, { kdTotal }) => a + kdTotal, 0))}</td>
+              <td className="r" style={{ color: 'var(--acc2)' }}>{R(rows.reduce((a, { bankTotal }) => a + bankTotal, 0))}</td>
+              <td className="r" style={{ color: Math.abs(rows.reduce((a, { diff }) => a + diff, 0)) < 0.01 ? 'var(--grn)' : 'var(--red)' }}>
+                {varianceLabel(rows.reduce((a, { bankTotal }) => a + bankTotal, 0), rows.reduce((a, { kdTotal }) => a + kdTotal, 0)).text}
+              </td>
+              <td></td>
+              <td></td>
+            </tr>
           </tbody>
         </table>
       </div>

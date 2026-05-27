@@ -3,11 +3,18 @@ import { useApp } from '../context/AppContext'
 import { parseKD, parseBank, parseContributions, parseCashJournal } from '../utils/parsers'
 import { dateStr } from '../utils/calc'
 import { fetchKdContributions, fetchKdJournal, fetchKdSales } from '../api/client'
+import { getErrors } from '../utils/errorCollector'
 import type { KdContribution, KdJournal, KdSales } from '../api/client'
 
 export default function Sidebar() {
   const app = useApp()
+  const { allDiscrepancies } = app
   const [fetching, setFetching] = useState(false)
+
+  const { currentStoreDiscrepancies } = app
+  const [alertsOpen, setAlertsOpen] = useState(false)
+  const errCount = currentStoreDiscrepancies.filter(d => d.severity === 'ERROR').length
+  const warnCount = currentStoreDiscrepancies.filter(d => d.severity === 'WARNING').length
 
   const daysInMonth = new Date(app.year, app.month, 0).getDate()
 
@@ -129,7 +136,7 @@ export default function Sidebar() {
     e.target.value = ''
   }
 
-  function exportJSON() {
+  async function exportJSON() {
     app.addLog('EXPORT', 'JSON Backup exported')
     const backup = {
       version: 1, exported: new Date().toISOString(),
@@ -139,6 +146,16 @@ export default function Sidebar() {
       kdRows: app.kdRows, storeRows: app.storeRows, bankRows: app.bankRows,
       removedBankEntries: app.removedBankEntries,
       journalRows: app.journalRows, contributionRows: app.contributionRows
+    }
+    try {
+      await fetch('/api/backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backup)
+      })
+      app.addLog('EXPORT', 'JSON Backup saved to server')
+    } catch (err) {
+      app.addLog('EXPORT_ERROR', `Failed to save backup to server: ${err}`)
     }
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }))
@@ -409,6 +426,14 @@ export default function Sidebar() {
       contribRowCount: app.contributionRows.length,
       journalRowCount: app.journalRows.length,
       removedBankEntries: app.removedBankEntries,
+      bookkeepingDiscrepancies: {
+        total: allDiscrepancies.length,
+        errors: allDiscrepancies.filter(d => d.severity === 'ERROR').length,
+        warnings: allDiscrepancies.filter(d => d.severity === 'WARNING').length,
+        info: allDiscrepancies.filter(d => d.severity === 'INFO').length,
+        items: allDiscrepancies
+      },
+      runtimeErrors: getErrors(),
       accuracyChecks,
       storeReports,
       contributionRows: app.contributionRows,
@@ -445,6 +470,11 @@ export default function Sidebar() {
         app.setJournalRows(b.journalRows || [])
         app.setContribRows(b.contributionRows || [])
         app.addLog('BACKUP_LOAD', `Backup restored: ${b.store.name} ${b.period.year}-${String(b.period.month).padStart(2,'0')}`)
+        fetch('/api/backup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(b)
+        }).catch(() => app.addLog('EXPORT_ERROR', 'Failed to push manual backup to server'))
       } catch (err) {
         app.addLog('BACKUP_ERROR', `Backup parse failed: ${file.name}`)
         alert('Failed to load backup')
@@ -580,6 +610,48 @@ export default function Sidebar() {
   <FileBtn label="📒 Load Cash Journal" accept=".csv,.xlsx,.xlsm,.xls" onChange={handleJournal} />
 </div>
         <FileBtn label="🏦 Load Bank CSV(s)" accept=".csv" multiple onChange={handleBank} />
+        <button className="btn" style={{marginTop:4}} onClick={() => setAlertsOpen(o => !o)}>
+          {errCount > 0
+            ? <span style={{color:'var(--red)'}}>✖ {errCount} err{errCount !== 1 ? 's' : ''}</span>
+            : warnCount > 0
+            ? <span style={{color:'#f5a623'}}>▲ {warnCount} warn{warnCount !== 1 ? 's' : ''}</span>
+            : <span style={{color:'var(--grn)'}}>✓ Recon Alerts</span>
+          }
+          {(errCount > 0 || warnCount > 0) && <span style={{color:'var(--txt2)',marginLeft:6}}>Recon Alerts</span>}
+        </button>
+        {alertsOpen && (
+          <div style={{marginTop:4, maxHeight:300, overflowY:'auto', background:'var(--bg)', border:'1px solid var(--brd)', borderRadius:4}}>
+            {(errCount + warnCount) === 0 ? (
+              <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--grn)',padding:'8px'}}>✓ No discrepancies</div>
+            ) : (
+              currentStoreDiscrepancies.filter(d => d.severity !== 'INFO').map(d => {
+                const TAB_MAP: Record<string, string> = {
+                  'Cash Up': 'cashup', 'Cash Recon': 'cashrecon', 'Card Recon': 'cardrecon',
+                  'Reconciliation': 'recon', 'Cash Journal': 'journal', 'Import Check': 'check',
+                  'Overs & Unders': 'overs', 'Day Sheet': 'daysheet'
+                }
+                function handleAlertClick() {
+                  if (d.storeCode !== app.code) app.selectStore(d.storeCode)
+                  if (TAB_MAP[d.tab]) app.setCurrentTab(TAB_MAP[d.tab])
+                  if (d.date) app.setCurrentDay(parseInt(d.date.substring(8)))
+                  setAlertsOpen(false)
+                }
+                return (
+                  <div key={d.id} onClick={handleAlertClick}
+                    style={{borderBottom:'1px solid var(--brd)',padding:'6px 8px',fontFamily:'var(--mono)',fontSize:9,lineHeight:1.5,cursor:'pointer'}}
+                    onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.background='var(--brd)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.background=''}
+                  >
+                    <div style={{color: d.severity === 'ERROR' ? 'var(--red)' : '#f5a623', fontWeight:700, marginBottom:2}}>
+                      {d.severity === 'ERROR' ? '✖' : '▲'} {d.field}{d.date ? ` · ${d.date.substring(8)}` : ''}
+                    </div>
+                    <div style={{color:'var(--txt2)'}}>{d.message.replace(/^[^:]+: /, '')}</div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        )}
         <button className="btn pri" style={{marginTop:8}} onClick={exportJSON}>⬇ Export JSON Backup</button>
         <button className="btn" style={{marginTop:4}} onClick={exportDiag}>🔍 Export Diagnostic</button>
         <FileBtn label="📂 Load Backup" accept=".json" onChange={handleBackup} />

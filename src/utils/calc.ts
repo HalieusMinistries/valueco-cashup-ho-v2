@@ -27,7 +27,7 @@ export function Rsigned(n: number): string {
 // reported > expected = OVER (store has more than expected)
 // reported < expected = SHORT (store has less than expected)
 export function varianceLabel(reported: number, expected: number): { text: string; ok: boolean; over: boolean } {
-  const d = N(reported) - N(expected)
+  const d = Math.round((N(reported) - N(expected)) * 100) / 100
   if (Math.abs(d) < 0.01) return { text: '✓ R0,00', ok: true, over: false }
   const abs = fmt(Math.abs(d))
   if (d > 0) return { text: `▲ OVER R${abs}`, ok: false, over: true }
