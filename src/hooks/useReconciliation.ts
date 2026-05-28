@@ -139,7 +139,7 @@ export function useReconciliation(day: number): ReconciliationResult {
   const physicalCashTotal = repCash + inp.surrender + (inp.cashOnHand || 0)
 
   // Grand total
-  const grandTotal = repCash + spTotal + contribEFT + inp.petty
+  const grandTotal = repCash + spTotal + contribEFT + inp.petty + (inp.refundOfPayment || 0)
 
   // Variance labels — always varianceLabel(reported, expected)
   const cashVariance = varianceLabel(repCash, kdCash)

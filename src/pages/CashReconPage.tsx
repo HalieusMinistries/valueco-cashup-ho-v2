@@ -95,6 +95,7 @@ export default function CashReconPage() {
               <th className="r" style={thStyle}>Change</th>
               <th className="r" style={thStyle}>Floats</th>
               <th style={thStyle}>Recon Nr</th>
+              <th className="r" style={thStyle}>Refund of Payment</th>
               <th className="r" style={thStyle}>System Total</th>
               <th className="r" style={thStyle}>Running Balance</th>
               <th className="r" style={thStyle}>Bank Total</th>
@@ -134,6 +135,9 @@ export default function CashReconPage() {
                     onChange={e => app.setDayInput(day, { cashReconNr: e.target.value })}
                     placeholder="Nr"
                   />
+                </td>
+                <td className="r">
+                  <NumericInput className="ti" style={{ width: 90 }} value={inp.refundOfPayment ?? 0} onChange={v => upd(day, 'refundOfPayment', v)} />
                 </td>
                 <td className="r">{R(systemTotal)}</td>
                 <td className="r">{R(rb)}</td>
@@ -190,6 +194,7 @@ export default function CashReconPage() {
               <td className="r">{R(rows.reduce((a, { inp }) => a + inp.change, 0))}</td>
               <td className="r">{R(rows.reduce((a, { inp }) => a + inp.floats, 0))}</td>
               <td></td>
+              <td className="r">{R(rows.reduce((a, { inp }) => a + (inp.refundOfPayment || 0), 0))}</td>
               <td className="r">{R(rows.reduce((a, { systemTotal }) => a + systemTotal, 0))}</td>
               <td></td>
               <td className="r">{R(rows.reduce((a, { bankTotal }) => a + bankTotal, 0))}</td>

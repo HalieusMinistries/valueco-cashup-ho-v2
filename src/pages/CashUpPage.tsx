@@ -282,6 +282,10 @@ function DaySheet({ day }: { day: number }) {
                   />
                 </div>
               ))}
+              <div className="frow">
+                <span className="flbl">Refund of Payment</span>
+                <NumericInput className="fi" value={inp.refundOfPayment ?? 0} onChange={v => upd('refundOfPayment', String(v))} />
+              </div>
               <div className="frow"><span className="flbl">K10 — EFT</span><span className="fval acc">{R(tE)}</span></div>
               <div className="frow"><span className="flbl">K11 — Return Vouchers</span><span className="fval">{R(tRt)}</span></div>
               <div className="frow"><span className="flbl">K12 — Gift Vouchers</span><span className="fval">{R(tV)}</span></div>
@@ -291,7 +295,7 @@ function DaySheet({ day }: { day: number }) {
               <div className="frow" style={{borderTop:'1px solid var(--brd)',marginTop:4,paddingTop:8}}>
                 <span className="flbl" style={{color:'var(--txt)'}}>K16 — Store Total</span>
                 <span className="fval acc" style={{fontSize:14}}>
-                  {R(inp.fnb+inp.surrender+effFloats+effChange+inp.petty+(inp.cashOnHand??0)+tE+tRt+tV+tL+tD)}
+                  {R(inp.fnb+inp.surrender+effFloats+effChange+inp.petty+(inp.cashOnHand??0)+tE+tRt+tV+tL+tD+(inp.refundOfPayment||0))}
                 </span>
               </div>
             </div>
@@ -399,6 +403,12 @@ function DaySheet({ day }: { day: number }) {
               <td>Petty Cash</td>
               <td className="r" style={{color:'var(--acc)'}}>—</td>
               <td className="r" style={{color:'var(--acc2)'}}>{R(inp.petty)}</td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>Refund of Payment</td>
+              <td className="r" style={{color:'var(--acc)'}}>—</td>
+              <td className="r" style={{color:'var(--acc2)'}}>{R(inp.refundOfPayment ?? 0)}</td>
               <td></td>
             </tr>
             <tr className="sub">

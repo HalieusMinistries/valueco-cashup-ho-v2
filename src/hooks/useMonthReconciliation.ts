@@ -48,6 +48,7 @@ export interface MonthRecon {
   totalRepCash: number
   totalPetty: number
   totalStoreEFT: number
+  totalRefundOfPayment: number
   // SP matches for display
   spMatches: ReturnType<typeof matchSpeedPoints>
 }
@@ -71,6 +72,7 @@ export function useMonthReconciliation(): MonthRecon {
   let totalKDCash = 0, totalKDCard = 0, totalKDEFT = 0
   let totalKDVoucher = 0, totalKDLoyalty = 0
   let totalSP = 0, totalRepCash = 0, totalPetty = 0, totalStoreEFT = 0
+  let totalRefundOfPayment = 0
 
   const days: DayRecon[] = []
 
@@ -119,7 +121,7 @@ export function useMonthReconciliation(): MonthRecon {
 
     // Cash Recon system total
     const fnbValue = inp.fnb !== 0 ? inp.fnb : contribCash
-    const systemTotal = fnbValue + inp.surrender
+    const systemTotal = fnbValue + inp.surrender + (inp.refundOfPayment || 0)
 
     // Variance labels
     const cashVariance = varianceLabel(fnbValue, kdCash)
@@ -135,6 +137,7 @@ export function useMonthReconciliation(): MonthRecon {
     totalRepCash += fnbValue
     totalPetty += inp.petty
     totalStoreEFT += storeEFT
+    totalRefundOfPayment += (inp.refundOfPayment || 0)
 
     days.push({
       day: d, ds,
@@ -156,6 +159,6 @@ export function useMonthReconciliation(): MonthRecon {
     days, spMatches,
     totalKDCash, totalKDCard, totalKDEFT,
     totalKDVoucher, totalKDLoyalty,
-    totalSP, totalRepCash, totalPetty, totalStoreEFT
+    totalSP, totalRepCash, totalPetty, totalStoreEFT, totalRefundOfPayment
   }
 }

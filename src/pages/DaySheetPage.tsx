@@ -82,7 +82,7 @@ function DaySheet({ day }: { day: number }) {
   const tErase = contribs.reduce((a: number, r: any) => a + r.erase, 0)
   const tPettyKD = contribs.reduce((a: number, r: any) => a + r.petty, 0)
 
-  const cashInSafe = inp.fnb + effFloats + effChange + (inp.looseChange || 0) + (inp.cashOnHand || 0) - inp.petty
+  const cashInSafe = inp.fnb + effFloats + effChange + (inp.looseChange || 0) + (inp.cashOnHand || 0) - inp.petty + (inp.refundOfPayment || 0)
 
   function upd(field: string, val: string) {
     const parsed = parseFloat(val) || 0
@@ -182,7 +182,11 @@ function DaySheet({ day }: { day: number }) {
           <div className="frow">
             <span className="flbl">Less: Petty Cash (manual)</span>
             <NumericInput className="fi" value={inp.petty} onChange={v => upd('petty', String(v))} />
+          </div><div className="frow">
+            <span className="flbl">Refund of Payment</span>
+            <NumericInput className="fi" value={inp.refundOfPayment ?? 0} onChange={v => upd('refundOfPayment', String(v))} />
           </div>
+
           <div className="frow">
             <span className="flbl">Petty Cash per KD Contributions</span>
             <span className="fval" style={{color: Math.abs(inp.petty - tPettyKD) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>

@@ -22,6 +22,7 @@ export default function ReconPage({ setTab }: Props) {
   const gSP = monthRecon.totalSP
   const gRep = monthRecon.totalRepCash
   const gPetty = monthRecon.totalPetty
+  const gRefund = monthRecon.totalRefundOfPayment
   const spMatches = monthRecon.spMatches
 
   const rows = activeDays.map(d => {
@@ -42,6 +43,7 @@ export default function ReconPage({ setTab }: Props) {
         <td className="r">{R(d.kdVoucher)}</td>
         <td className="r">{R(d.kdLoyalty)}</td>
         <td className="r">{R(inp.petty)}</td>
+        <td className="r">{R(inp.refundOfPayment || 0)}</td>
       </tr>
     )
   })
@@ -73,6 +75,7 @@ export default function ReconPage({ setTab }: Props) {
               <th className="r">KD Voucher</th>
               <th className="r">KD Loyalty</th>
               <th className="r">Petty</th>
+              <th className="r">Refund</th>
             </tr>
             <tr>
               <th></th>
@@ -99,6 +102,7 @@ export default function ReconPage({ setTab }: Props) {
               <td className="r">{R(gKDV)}</td>
               <td className="r">{R(gKDL)}</td>
               <td className="r">{R(gPetty)}</td>
+              <td className="r">{R(gRefund)}</td>
             </tr>
           </tbody>
         </table>
