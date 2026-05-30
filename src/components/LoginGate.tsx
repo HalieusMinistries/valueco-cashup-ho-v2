@@ -6,23 +6,23 @@ export default function LoginGate() {
   const { setAuthed } = useApp()
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
-  const [error, setError] = useState(false)
+  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   async function doLogin() {
     if (!user || !pass) return
     setLoading(true)
-    setError(false)
+    setError('')
     try {
-      const ok = await login(user, pass)
-      if (ok) {
+      const result = await login(user, pass)
+      if (result.success) {
         setAuthed(true)
       } else {
-        setError(true)
+        setError('Invalid credentials. Access denied.')
         setPass('')
       }
     } catch {
-      setError(true)
+      setError('Cannot reach server. Check your connection.')
       setPass('')
     } finally {
       setLoading(false)
@@ -76,7 +76,7 @@ export default function LoginGate() {
         />
         {error && (
           <div style={{ color: 'var(--red)', fontFamily: 'var(--mono)', fontSize: 10, marginBottom: 10 }}>
-            Invalid credentials. Access denied.
+            {error}
           </div>
         )}
         <button

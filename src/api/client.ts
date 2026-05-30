@@ -21,14 +21,18 @@ export interface LiveDay {
   cashierRows: LiveCashierRow[]
 }
 
-export async function login(username: string, password: string): Promise<boolean> {
-  const users: Record<string, string> = {
-    'matthew': 'Revelation@717',
-    'monique': 'cashup2026',
-    'elmarie': 'cashup2026',
-    'lynne': 'cashup2026',
+export async function login(username: string, password: string): Promise<{ success: boolean; role?: string; storeCode?: string | null; fullName?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    })
+    if (!res.ok) return { success: false }
+    return res.json()
+  } catch {
+    return { success: false }
   }
-  return users[username.toLowerCase()] === password
 }
 
 export async function fetchStores(): Promise<LiveStore[]> {
