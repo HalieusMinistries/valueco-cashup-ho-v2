@@ -545,7 +545,7 @@ export default function Sidebar() {
 
         // Aggregate journal entries by date — sum receipts and payments, keep last balance
         const journalByDate = new Map<string, { prevBal: number; revenueToday: number; expenseToday: number; balanceToday: number; name: string }>()
-        journal.filter(r => r.accountCode !== '0').forEach(r => {
+        journal.forEach(r => {
           const existing = journalByDate.get(r.date)
           if (existing) {
             existing.revenueToday += r.receiptAmount

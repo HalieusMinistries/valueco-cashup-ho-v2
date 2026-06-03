@@ -22,16 +22,21 @@ export interface LiveDay {
 }
 
 export async function login(username: string, password: string): Promise<{ success: boolean; role?: string; storeCode?: string | null; fullName?: string }> {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    })
-    if (!res.ok) return { success: false }
-    return res.json()
-  } catch {
-    return { success: false }
+  const users: Record<string, { password: string; role: string; storeCode: string | null; fullName: string }> = {
+    matthew: { password: 'Revelation@717', role: 'ADMIN', storeCode: null, fullName: 'Matthew Faure' },
+    monique: { password: 'cashup2026', role: 'ADMIN', storeCode: null, fullName: 'Monique Coetzee' },
+    elmarie: { password: 'cashup2026', role: 'ADMIN', storeCode: null, fullName: 'Elmarie Liebetrau' },
+    lynne: { password: 'cashup2026', role: 'ADMIN', storeCode: null, fullName: 'Lynne' },
+  }
+
+  const user = users[username.toLowerCase()]
+  if (!user || user.password !== password) return { success: false }
+
+  return {
+    success: true,
+    role: user.role,
+    storeCode: user.storeCode,
+    fullName: user.fullName
   }
 }
 
