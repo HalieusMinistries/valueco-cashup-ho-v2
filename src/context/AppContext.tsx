@@ -481,10 +481,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (day !== null) addLog('NAV', `Opened day ${String(day).padStart(2, '0')}`)
   }
 
-  const getDayInput = (day: number): DayInput => state.dayInputs[day] ?? defaultDayInput()
+  const dayInputKey = (storeCode: string, day: number) => `${storeCode}-${day}`
+
+  const getDayInput = (day: number): DayInput =>
+    state.dayInputs[dayInputKey(state.code, day) as any] ?? defaultDayInput()
 
   const setDayInput = (day: number, input: Partial<DayInput>) => {
-    const existing = state.dayInputs[day] ?? defaultDayInput()
+    const key = dayInputKey(state.code, day) as any
+    const existing = state.dayInputs[key] ?? defaultDayInput()
     Object.keys(input).forEach(key => {
       const k = key as keyof DayInput
       const oldVal = existing[k]
@@ -496,7 +500,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
     setState(s => ({
       ...s,
-      dayInputs: { ...s.dayInputs, [day]: { ...defaultDayInput(), ...s.dayInputs[day], ...input } }
+      dayInputs: { ...s.dayInputs, [key]: { ...defaultDayInput(), ...s.dayInputs[key], ...input } }
     }))
   }
 
