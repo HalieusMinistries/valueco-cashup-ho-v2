@@ -224,7 +224,7 @@ function DaySheet({ day }: { day: number }) {
           <thead>
             <tr>
               <th>Cashier</th><th className="r">Cash (Reported)</th>
-              <th className="r">Bank Card (Reported)</th><th className="r">EFT</th><th className="r">Erase</th>
+              <th className="r">Bank Card (Reported)</th><th className="r">EFT</th><th className="r">Payment by Points</th><th className="r">Erase</th>
               <th className="r">vs KD System</th>
             </tr>
           </thead>
@@ -234,6 +234,7 @@ function DaySheet({ day }: { day: number }) {
                 <td>{r.name}</td>
                 <td className="r">{R(r.cash)}</td><td className="r">{R(r.card)}</td>
                 <td className="r">{R(r.eft || 0)}</td>
+                <td className="r">{R(r.loyalty || 0)}</td>
                 <td className="r">{R(r.erase)}</td>
                 <td className="r" style={{color: Math.abs(r.diff) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>
                   {varianceLabel(-r.diff, 0).ok ? '✓ R0,00' : varianceLabel(-r.diff, 0).text}
@@ -248,6 +249,7 @@ function DaySheet({ day }: { day: number }) {
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + r.cash, 0))}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + r.card, 0))}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + (r.eft || 0), 0))}</td>
+                <td className="r">{R(contribs.reduce((a: number, r: any) => a + (r.loyalty || 0), 0))}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + r.erase, 0))}</td>
                 <td></td>
               </tr>

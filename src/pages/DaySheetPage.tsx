@@ -56,13 +56,21 @@ function DaySheet({ day }: { day: number }) {
     const map: Record<string, any> = {}
     rows.forEach(r => {
       if (!map[r.cashier]) map[r.cashier] = {
-        name: r.cashier, cash: 0, card: 0, eft: 0, erase: 0,
-        petty: r.petty, diff: 0, remark: r.remark || ''
-      }
+        name: r.cashier,
+        cash: 0,
+        card: 0,
+        eft: 0,
+        erase: 0,
+        loyalty: 0,
+        petty: r.petty,
+        diff: 0,
+        remark: r.remark || ''
+    }
       if (r.mode === 'cash') map[r.cashier].cash = r.contribution
       else if (r.mode === 'bank card') map[r.cashier].card = r.contribution
-      else if (r.mode === 'eft') { map[r.cashier].eft = r.contribution; console.log('EFT hit:', r.cashier, r.contribution, r.store, r.date) }
+      else if (r.mode === 'eft') map[r.cashier].eft = r.contribution
       else if (r.mode === 'erase') map[r.cashier].erase = r.contribution
+      else if (r.mode === 'payment by points') map[r.cashier].loyalty = r.contribution
       map[r.cashier].diff += r.diff
     })
     return Object.values(map)
@@ -79,6 +87,7 @@ function DaySheet({ day }: { day: number }) {
 
   const tCash = contribs.reduce((a: number, r: any) => a + r.cash, 0)
   const tCard = contribs.reduce((a: number, r: any) => a + r.card, 0)
+  const tLoyalty = contribs.reduce((a: number, r: any) => a + (r.loyalty || 0), 0)
   const tErase = contribs.reduce((a: number, r: any) => a + r.erase, 0)
   const tPettyKD = contribs.reduce((a: number, r: any) => a + r.petty, 0)
 
@@ -117,6 +126,7 @@ function DaySheet({ day }: { day: number }) {
               <th className="r">Cash</th>
               <th className="r">Bank Card</th>
               <th className="r">EFT</th>
+              <th className="r">Payment by Points</th>
               <th className="r">Erase</th>
               <th className="r">Petty Cash</th>
               <th className="r">vs KD System</th>
@@ -130,6 +140,7 @@ function DaySheet({ day }: { day: number }) {
                 <td className="r">{R(r.cash)}</td>
                 <td className="r">{R(r.card)}</td>
                 <td className="r">{R(r.eft || 0)}</td>
+                <td className="r">{R(r.loyalty || 0)}</td>
                 <td className="r">{R(r.erase)}</td>
                 <td className="r">{R(r.petty)}</td>
                 <td className="r" style={{color: Math.abs(r.diff) < 0.01 ? 'var(--grn)' : 'var(--red)'}}>
@@ -146,6 +157,7 @@ function DaySheet({ day }: { day: number }) {
                 <td className="r">{R(tCash)}</td>
                 <td className="r">{R(tCard)}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + (r.eft || 0), 0))}</td>
+                <td className="r">{R(tLoyalty)}</td>
                 <td className="r">{R(tErase)}</td>
                 <td className="r">{R(contribs.reduce((a: number, r: any) => a + r.petty, 0))}</td>
                 <td></td><td></td>

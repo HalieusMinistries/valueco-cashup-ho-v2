@@ -489,7 +489,17 @@ export default function Sidebar() {
     app.addLog('IMPORT', `KingDee fetch started — all stores for ${app.year}-${String(app.month).padStart(2,'0')}`)
     try {
       const dateFrom = `${app.year}-${String(app.month).padStart(2,'0')}-01`
-      const dateTo = `${app.year}-${String(app.month).padStart(2,'0')}-${String(daysInMonth).padStart(2,'0')}`
+      
+      const today = new Date()
+const isCurrentMonth =
+  app.year === today.getFullYear() &&
+  app.month === today.getMonth() + 1
+
+const fetchToDay = isCurrentMonth
+  ? Math.min(today.getDate(), daysInMonth)
+  : daysInMonth
+
+const dateTo = `${app.year}-${String(app.month).padStart(2,'0')}-${String(fetchToDay).padStart(2,'0')}`
 
       const results = await Promise.all(
         app.stores.map(store =>
