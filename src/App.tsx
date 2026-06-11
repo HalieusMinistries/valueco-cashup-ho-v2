@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SplashScreen from './components/SplashScreen'
 import { AppProvider, useApp } from './context/AppContext'
 import LoginGate from './components/LoginGate'
 import TopBar from './components/TopBar'
@@ -71,6 +72,16 @@ function Shell() {
 }
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
+
+  if (showSplash) {
+    return (
+      <SplashScreen
+        onComplete={() => setShowSplash(false)}
+      />
+    )
+  }
+
   return (
     <AppProvider>
       <Shell />
