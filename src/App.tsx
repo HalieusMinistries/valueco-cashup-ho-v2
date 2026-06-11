@@ -5,6 +5,7 @@ import LoginGate from './components/LoginGate'
 import TopBar from './components/TopBar'
 import NavBar from './components/NavBar'
 import Sidebar from './components/Sidebar'
+import CompanySelector from './components/CompanySelector'
 import SetupPage from './pages/SetupPage'
 import CashUpPage from './pages/CashUpPage'
 import ReconPage from './pages/ReconPage'
@@ -73,11 +74,25 @@ function Shell() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(
+    sessionStorage.getItem('vc_company')
+  )
 
   if (showSplash) {
     return (
       <SplashScreen
         onComplete={() => setShowSplash(false)}
+      />
+    )
+  }
+
+  if (!selectedCompany) {
+    return (
+      <CompanySelector
+        onSelect={(company) => {
+          sessionStorage.setItem('vc_company', company)
+          setSelectedCompany(company)
+        }}
       />
     )
   }

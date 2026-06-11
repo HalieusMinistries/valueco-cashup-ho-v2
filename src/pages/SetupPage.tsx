@@ -101,7 +101,7 @@ export default function SetupPage() {
         </div>
       </div>
 
-      <div className="section-lbl">Known VCL Stores</div>
+      <div className="section-lbl">Known Stores</div>
       <div className="store-grid">
         {app.stores.map(s => (
           <div

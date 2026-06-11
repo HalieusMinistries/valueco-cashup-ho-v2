@@ -3,7 +3,9 @@ export interface StoreConfig {
   floats: number; change: number; addr: string
 }
 
-export const VCL_STORES: StoreConfig[] = [
+export type CompanyCode = 'VALUECO' | 'PETOK'
+
+export const VALUECO_STORES: StoreConfig[] = [
   { code: 'VCL01', name: 'VCL Randburg', bank: '63168708932', sp: '00627792', floats: 5050, change: 9800, addr: 'Lifestyle Garden Centre, C/O Beyers Naude & Ysterhout Ave, Randpark Ridge, Randburg' },
   { code: 'VCL02', name: 'VCL Centurion', bank: '63168708015', sp: '00627479', floats: 5050, change: 5150.9, addr: 'Gateway Plaza, C/O Sarel Baard Ave & Old Johannesburg Rd, Rooihuiskraal, Centurion' },
   { code: 'VCL03', name: 'VCL Alberton', bank: '63168707364', sp: '00626349', floats: 5050, change: 4550, addr: 'Alberton Value Centre, 16 St Austell St, New Redruth, Alberton' },
@@ -26,6 +28,17 @@ export const VCL_STORES: StoreConfig[] = [
   { code: 'VCL23', name: 'VCL Waterfall Ridge', bank: '63168708669', sp: '00630150', floats: 5050, change: 4000, addr: 'Waterfall Ridge Centre, C/O Ridge & Pretorius Rd, Vorna Valley, Midrand' },
   { code: 'VCL24', name: 'VCL Wavecrest - Test', bank: '', sp: '', floats: 2020, change: 5300, addr: 'Test Store' },
 ]
+
+export const PETOK_STORES: StoreConfig[] = [
+  { code: 'PETOK01', name: 'PetOK Store 1', bank: '', sp: '', floats: 0, change: 0, addr: '' },
+]
+
+export function getStoresForCompany(company: string | null): StoreConfig[] {
+  if (company === 'PETOK') return PETOK_STORES
+  return VALUECO_STORES
+}
+
+export const VCL_STORES = VALUECO_STORES
 
 export const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
 export const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']

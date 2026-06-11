@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useRef, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import { VCL_STORES, type StoreConfig } from '../utils/stores'
+import { getStoresForCompany, type StoreConfig } from '../utils/stores'
 import { saveState, loadState, saveLog, loadLog, checkServerHealth, formatPeriod } from '../utils/persistence'
 import { runBookkeepingEngine } from '../utils/bookkeepingEngine'
 import type { Discrepancy } from '../utils/bookkeepingEngine'
@@ -120,8 +120,11 @@ const Ctx = createContext<AppContextType | null>(null)
 // ─── Provider ───────────────────────────────────────────────────────────────
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const selectedCompany = sessionStorage.getItem('vc_company')
+  const companyStores = getStoresForCompany(selectedCompany)
+  const defaultStore = companyStores[0]
   const [state, setState] = useState<AppState>({
-    name: 'VCL Blueberry', code: 'VCL10', bank: '63168706861', sp: '00629442',
+    name: defaultStore.name, code: defaultStore.code, bank: defaultStore.bank, sp: defaultStore.sp,
     month: new Date().getMonth() + 1, year: new Date().getFullYear(),
     kdRows: [], bankRows: [], storeRows: [], contributionRows: [], journalRows: [],
     dayInputs: {}, currentDay: null,
@@ -505,7 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const selectStore = (code: string) => {
-    const st = VCL_STORES.find((store: StoreConfig) => store.code === code)
+    const st = companyStores.find((store: StoreConfig) => store.code === code)
     if (!st) return
     const daysInMonth = new Date(state.year, state.month, 0).getDate()
     const newInputs = { ...state.dayInputs }
@@ -532,7 +535,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // ─── Bookkeeping Engine ───────────────────────────────────────────────────
 
   const allDiscrepancies = useMemo(() => runBookkeepingEngine({
-    stores: VCL_STORES,
+    stores: companyStores,
     kdRows: state.kdRows,
     bankRows: state.bankRows,
     contributionRows: state.contributionRows,
@@ -552,7 +555,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <Ctx.Provider value={{
-      ...state, stores: VCL_STORES,
+      ...state, stores: companyStores,
       setAuthed, setConfig, setKDRows, setBankRows, setStoreRows,
       setContribRows, setJournalRows, setDayInput, setCurrentDay, setCurrentTab,
       selectStore, getDayInput, resetMonth,
