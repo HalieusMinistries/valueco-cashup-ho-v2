@@ -73,18 +73,9 @@ function Shell() {
 }
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true)
   const [selectedCompany, setSelectedCompany] = useState<string | null>(
     sessionStorage.getItem('vc_company')
   )
-
-  if (showSplash) {
-    return (
-      <SplashScreen
-        onComplete={() => setShowSplash(false)}
-      />
-    )
-  }
 
   if (!selectedCompany) {
     return (
