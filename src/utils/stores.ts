@@ -30,7 +30,15 @@ export const VALUECO_STORES: StoreConfig[] = [
 ]
 
 export const PETOK_STORES: StoreConfig[] = [
-  { code: 'PETOK01', name: 'PetOK Store 1', bank: '', sp: '', floats: 0, change: 0, addr: '' },
+  {
+    code: 'PET01',
+    name: 'PetOK Rivonia',
+    bank: '63210979944',
+    sp: '1000000002741337',
+    floats: 0,
+    change: 0,
+    addr: 'Rivonia'
+  },
 ]
 
 export function getStoresForCompany(company: string | null): StoreConfig[] {
